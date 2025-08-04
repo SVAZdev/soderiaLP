@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta de Saldo - Sodería</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full mb-4">
+                <i class="fas fa-tint text-white text-2xl"></i>
+            </div>
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">Consulta de Saldo</h1>
+            <p class="text-gray-600 text-lg">Sodería - Consulta tu saldo fácilmente</p>
+        </div>
+
+        <!-- Search Form -->
+        <div class="max-w-md mx-auto mb-8">
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <div class="mb-4">
+                    <label for="searchInput" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-search mr-2"></i>Buscar por número o dirección
+                    </label>
+                    <div class="relative">
+                        <input 
+                            type="text" 
+                            id="searchInput" 
+                            placeholder="Ej: 2664123456 o Mitre 123"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                        >
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                            <div id="loadingSpinner" class="hidden">
+                                <i class="fas fa-spinner fa-spin text-blue-500"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button 
+                    onclick="searchCustomers()"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
+                >
+                    <i class="fas fa-search mr-2"></i>Buscar
+                </button>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="resultsSection" class="max-w-2xl mx-auto hidden">
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div class="bg-gray-50 px-6 py-4 border-b">
+                    <h2 class="text-lg font-semibold text-gray-800">
+                        <i class="fas fa-list mr-2"></i>Resultados de la búsqueda
+                    </h2>
+                </div>
+                <div id="resultsContainer" class="p-6">
+                    <!-- Results will be inserted here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- No Results Message -->
+        <div id="noResults" class="max-w-md mx-auto hidden">
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+                <i class="fas fa-exclamation-triangle text-yellow-600 text-3xl mb-4"></i>
+                <h3 class="text-lg font-medium text-yellow-800 mb-2">No se encontró ningún cliente</h3>
+                <p class="text-yellow-700">Verifica el número o dirección ingresada e intenta nuevamente.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let searchTimeout;
+
+        // Search as user types (with debounce)
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            clearTimeout(searchTimeout);
+            const query = e.target.value.trim();
+            
+            if (query.length >= 2) {
+                searchTimeout = setTimeout(() => {
+                    searchCustomers();
+                }, 500);
+            } else {
+                hideResults();
+            }
+        });
+
+        // Search on Enter key
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchCustomers();
+            }
+        });
+
+        function showLoading() {
+            document.getElementById('loadingSpinner').classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingSpinner').classList.add('hidden');
+        }
+
+        function hideResults() {
+            document.getElementById('resultsSection').classList.add('hidden');
+            document.getElementById('noResults').classList.add('hidden');
+        }
+
+        function searchCustomers() {
+            const query = document.getElementById('searchInput').value.trim();
+            
+            if (!query) {
+                hideResults();
+                return;
+            }
+
+            showLoading();
+            hideResults();
+
+            fetch(`/search?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    hideLoading();
+                    displayResults(data);
+                })
+                .catch(error => {
+                    hideLoading();
+                    console.error('Error:', error);
+                    showError();
+                });
+        }
+
+        function displayResults(customers) {
+            const resultsSection = document.getElementById('resultsSection');
+            const noResults = document.getElementById('noResults');
+            const resultsContainer = document.getElementById('resultsContainer');
+
+            if (customers.length === 0) {
+                noResults.classList.remove('hidden');
+                return;
+            }
+
+            let html = '';
+            
+            customers.forEach(customer => {
+                html += `
+                    <div class="border-b border-gray-200 last:border-b-0 pb-4 mb-4 last:pb-0 last:mb-0">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <h3 class="text-lg font-semibold text-gray-800 mb-1">
+                                    <i class="fas fa-user mr-2 text-blue-500"></i>${customer.nombre}
+                                </h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600 mb-3">
+                                    <div>
+                                        <i class="fas fa-phone mr-2 text-green-500"></i>
+                                        <span class="font-medium">${customer.numero}</span>
+                                    </div>
+                                    <div>
+                                        <i class="fas fa-map-marker-alt mr-2 text-red-500"></i>
+                                        <span class="font-medium">${customer.direccion}</span>
+                                    </div>
+                                </div>
+                                <div class="bg-blue-50 rounded-lg p-3 mb-3">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-dollar-sign text-blue-600 mr-2"></i>
+                                        <span class="text-lg font-bold text-blue-800">Saldo: $${customer.saldo}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex justify-end">
+                            <a 
+                                href="${customer.whatsapp_link}" 
+                                target="_blank"
+                                class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors duration-200"
+                            >
+                                <i class="fab fa-whatsapp mr-2"></i>Enviar WhatsApp
+                            </a>
+                        </div>
+                    </div>
+                `;
+            });
+
+            resultsContainer.innerHTML = html;
+            resultsSection.classList.remove('hidden');
+        }
+
+        function showError() {
+            const noResults = document.getElementById('noResults');
+            noResults.innerHTML = `
+                <div class="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+                    <i class="fas fa-exclamation-circle text-red-600 text-3xl mb-4"></i>
+                    <h3 class="text-lg font-medium text-red-800 mb-2">Error en la búsqueda</h3>
+                    <p class="text-red-700">Ocurrió un error al buscar. Por favor, intenta nuevamente.</p>
+                </div>
+            `;
+            noResults.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html> 
