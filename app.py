@@ -88,9 +88,69 @@ def index():
     """Página principal"""
     return render_template('index.html')
 
+@app.route('/login')
+def login():
+    """Endpoint para autenticar clientes"""
+    direccion = request.args.get('direccion', '').strip().lower()
+    telefono = request.args.get('telefono', '').strip()
+    
+    if not direccion or not telefono:
+        return jsonify({'success': False, 'message': 'Datos incompletos'})
+    
+    customers = load_customers()
+    
+    # Buscar cliente que coincida exactamente con dirección y teléfono
+    for customer in customers:
+        customer_direccion = str(customer.get('direccion', '')).lower()
+        customer_telefono = str(customer.get('numero', ''))
+        
+        if direccion in customer_direccion and telefono == customer_telefono:
+            # Agregar enlace de WhatsApp
+            customer['whatsapp_link'] = generate_whatsapp_link(customer)
+            return jsonify({
+                'success': True, 
+                'customer': customer,
+                'message': 'Cliente autenticado correctamente'
+            })
+    
+    return jsonify({'success': False, 'message': 'Datos incorrectos'})
+
+@app.route('/refresh-balance')
+def refresh_balance():
+    """Endpoint para actualizar saldo del cliente"""
+    direccion = request.args.get('direccion', '').strip().lower()
+    telefono = request.args.get('telefono', '').strip()
+    
+    if not direccion or not telefono:
+        return jsonify({'success': False, 'message': 'Datos incompletos'})
+    
+    customers = load_customers()
+    
+    # Buscar cliente y actualizar saldo (simulado)
+    for customer in customers:
+        customer_direccion = str(customer.get('direccion', '')).lower()
+        customer_telefono = str(customer.get('numero', ''))
+        
+        if direccion in customer_direccion and telefono == customer_telefono:
+            # En un caso real, aquí se consultaría la base de datos
+            # Por ahora, simulamos una pequeña variación en el saldo
+            import random
+            variation = random.uniform(-100, 100)
+            customer['saldo'] = round(float(customer.get('saldo', 0)) + variation, 2)
+            
+            # Agregar enlace de WhatsApp
+            customer['whatsapp_link'] = generate_whatsapp_link(customer)
+            return jsonify({
+                'success': True, 
+                'customer': customer,
+                'message': 'Saldo actualizado'
+            })
+    
+    return jsonify({'success': False, 'message': 'Cliente no encontrado'})
+
 @app.route('/search')
 def search():
-    """Endpoint para buscar clientes"""
+    """Endpoint para buscar clientes (mantenido para compatibilidad)"""
     query = request.args.get('q', '')
     customers = load_customers()
     results = search_customers(query, customers)

@@ -16,190 +16,315 @@
                 <i class="fas fa-tint text-white text-2xl"></i>
             </div>
             <h1 class="text-4xl font-bold text-gray-800 mb-2">Consulta de Saldo</h1>
-            <p class="text-gray-600 text-lg">Sodería - Consulta tu saldo fácilmente</p>
+            <p class="text-gray-600 text-lg">Sodería - Accede a tu información personal</p>
         </div>
 
-        <!-- Search Form -->
-        <div class="max-w-md mx-auto mb-8">
+        <!-- Login Form -->
+        <div id="loginSection" class="max-w-md mx-auto">
             <div class="bg-white rounded-lg shadow-lg p-6">
-                <div class="mb-4">
-                    <label for="searchInput" class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="fas fa-search mr-2"></i>Buscar por número o dirección
-                    </label>
-                    <div class="relative">
+                <div class="text-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">
+                        <i class="fas fa-user-lock mr-2 text-blue-600"></i>Acceso Cliente
+                    </h2>
+                    <p class="text-gray-600">Ingresa tus datos para consultar tu saldo</p>
+                </div>
+                
+                <form id="loginForm" onsubmit="return validateAndLogin(event)">
+                    <div class="mb-4">
+                        <label for="direccionInput" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-map-marker-alt mr-2 text-red-500"></i>Dirección
+                        </label>
                         <input 
                             type="text" 
-                            id="searchInput" 
-                            placeholder="Ej: 2664123456 o Mitre 123"
+                            id="direccionInput" 
+                            name="direccion"
+                            placeholder="Ej: Mitre 123"
                             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                            required
                         >
-                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
-                            <div id="loadingSpinner" class="hidden">
-                                <i class="fas fa-spinner fa-spin text-blue-500"></i>
-                            </div>
-                        </div>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <label for="telefonoInput" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-phone mr-2 text-green-500"></i>Número de Teléfono
+                        </label>
+                        <input 
+                            type="tel" 
+                            id="telefonoInput" 
+                            name="telefono"
+                            placeholder="Ej: 2664123456"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                            required
+                        >
+                    </div>
+                    
+                    <button 
+                        type="submit"
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
+                    >
+                        <i class="fas fa-sign-in-alt mr-2"></i>Acceder
+                    </button>
+                </form>
+                
+                <div class="mt-4 text-center">
+                    <p class="text-sm text-gray-500">
+                        <i class="fas fa-shield-alt mr-1"></i>
+                        Tus datos están seguros y solo se usan para verificar tu identidad
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Customer Dashboard -->
+        <div id="dashboardSection" class="max-w-2xl mx-auto hidden">
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-xl font-bold text-white">
+                            <i class="fas fa-user mr-2"></i>Panel del Cliente
+                        </h2>
+                        <button 
+                            onclick="logout()"
+                            class="text-white hover:text-gray-200 transition-colors duration-200"
+                        >
+                            <i class="fas fa-sign-out-alt mr-1"></i>Cerrar Sesión
+                        </button>
                     </div>
                 </div>
+                
+                <div id="customerInfo" class="p-6">
+                    <!-- Customer information will be inserted here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Message -->
+        <div id="errorMessage" class="max-w-md mx-auto hidden">
+            <div class="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+                <i class="fas fa-exclamation-circle text-red-600 text-3xl mb-4"></i>
+                <h3 class="text-lg font-medium text-red-800 mb-2">Datos incorrectos</h3>
+                <p class="text-red-700">La dirección y número de teléfono no coinciden con nuestros registros.</p>
                 <button 
-                    onclick="searchCustomers()"
-                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
+                    onclick="showLogin()"
+                    class="mt-4 bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200"
                 >
-                    <i class="fas fa-search mr-2"></i>Buscar
+                    <i class="fas fa-arrow-left mr-2"></i>Intentar Nuevamente
                 </button>
             </div>
         </div>
 
-        <!-- Results Section -->
-        <div id="resultsSection" class="max-w-2xl mx-auto hidden">
-            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                <div class="bg-gray-50 px-6 py-4 border-b">
-                    <h2 class="text-lg font-semibold text-gray-800">
-                        <i class="fas fa-list mr-2"></i>Resultados de la búsqueda
-                    </h2>
+        <!-- Loading Spinner -->
+        <div id="loadingSection" class="max-w-md mx-auto hidden">
+            <div class="bg-white rounded-lg shadow-lg p-6 text-center">
+                <div class="inline-flex items-center justify-center w-12 h-12 bg-blue-600 rounded-full mb-4">
+                    <i class="fas fa-spinner fa-spin text-white text-xl"></i>
                 </div>
-                <div id="resultsContainer" class="p-6">
-                    <!-- Results will be inserted here -->
-                </div>
-            </div>
-        </div>
-
-        <!-- No Results Message -->
-        <div id="noResults" class="max-w-md mx-auto hidden">
-            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
-                <i class="fas fa-exclamation-triangle text-yellow-600 text-3xl mb-4"></i>
-                <h3 class="text-lg font-medium text-yellow-800 mb-2">No se encontró ningún cliente</h3>
-                <p class="text-yellow-700">Verifica el número o dirección ingresada e intenta nuevamente.</p>
+                <h3 class="text-lg font-medium text-gray-800 mb-2">Verificando datos...</h3>
+                <p class="text-gray-600">Por favor espera mientras validamos tu información.</p>
             </div>
         </div>
     </div>
 
     <script>
-        let searchTimeout;
+        // Variables globales
+        let currentCustomer = null;
 
-        // Search as user types (with debounce)
-        document.getElementById('searchInput').addEventListener('input', function(e) {
-            clearTimeout(searchTimeout);
-            const query = e.target.value.trim();
+        // Función para validar y hacer login
+        function validateAndLogin(event) {
+            event.preventDefault();
             
-            if (query.length >= 2) {
-                searchTimeout = setTimeout(() => {
-                    searchCustomers();
-                }, 500);
-            } else {
-                hideResults();
-            }
-        });
-
-        // Search on Enter key
-        document.getElementById('searchInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                searchCustomers();
-            }
-        });
-
-        function showLoading() {
-            document.getElementById('loadingSpinner').classList.remove('hidden');
-        }
-
-        function hideLoading() {
-            document.getElementById('loadingSpinner').classList.add('hidden');
-        }
-
-        function hideResults() {
-            document.getElementById('resultsSection').classList.add('hidden');
-            document.getElementById('noResults').classList.add('hidden');
-        }
-
-        function searchCustomers() {
-            const query = document.getElementById('searchInput').value.trim();
+            const direccion = document.getElementById('direccionInput').value.trim();
+            const telefono = document.getElementById('telefonoInput').value.trim();
             
-            if (!query) {
-                hideResults();
-                return;
+            if (!direccion || !telefono) {
+                alert('Por favor completa todos los campos');
+                return false;
             }
-
+            
             showLoading();
-            hideResults();
-
-            fetch(`/search?q=${encodeURIComponent(query)}`)
+            hideAllSections();
+            
+            // Buscar cliente por dirección y teléfono
+            fetch(`/login?direccion=${encodeURIComponent(direccion)}&telefono=${encodeURIComponent(telefono)}`)
                 .then(response => response.json())
                 .then(data => {
                     hideLoading();
-                    displayResults(data);
+                    if (data.success) {
+                        currentCustomer = data.customer;
+                        showDashboard();
+                    } else {
+                        showError();
+                    }
                 })
                 .catch(error => {
                     hideLoading();
                     console.error('Error:', error);
                     showError();
                 });
+            
+            return false;
         }
 
-        function displayResults(customers) {
-            const resultsSection = document.getElementById('resultsSection');
-            const noResults = document.getElementById('noResults');
-            const resultsContainer = document.getElementById('resultsContainer');
-
-            if (customers.length === 0) {
-                noResults.classList.remove('hidden');
-                return;
-            }
-
-            let html = '';
+        // Función para mostrar el dashboard del cliente
+        function showDashboard() {
+            if (!currentCustomer) return;
             
-            customers.forEach(customer => {
-                html += `
-                    <div class="border-b border-gray-200 last:border-b-0 pb-4 mb-4 last:pb-0 last:mb-0">
-                        <div class="flex items-start justify-between">
-                            <div class="flex-1">
-                                <h3 class="text-lg font-semibold text-gray-800 mb-1">
-                                    <i class="fas fa-user mr-2 text-blue-500"></i>${customer.nombre}
-                                </h3>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600 mb-3">
-                                    <div>
-                                        <i class="fas fa-phone mr-2 text-green-500"></i>
-                                        <span class="font-medium">${customer.numero}</span>
-                                    </div>
-                                    <div>
-                                        <i class="fas fa-map-marker-alt mr-2 text-red-500"></i>
-                                        <span class="font-medium">${customer.direccion}</span>
-                                    </div>
+            const customerInfo = document.getElementById('customerInfo');
+            
+            const html = `
+                <div class="space-y-6">
+                    <!-- Información del Cliente -->
+                    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6">
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center mr-4">
+                                <i class="fas fa-user text-white text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-2xl font-bold text-gray-800">${currentCustomer.nombre}</h3>
+                                <p class="text-gray-600">Cliente Verificado</p>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="flex items-center">
+                                <i class="fas fa-phone text-green-500 mr-3 text-lg"></i>
+                                <div>
+                                    <p class="text-sm text-gray-500">Teléfono</p>
+                                    <p class="font-semibold text-gray-800">${currentCustomer.numero}</p>
                                 </div>
-                                <div class="bg-blue-50 rounded-lg p-3 mb-3">
-                                    <div class="flex items-center">
-                                        <i class="fas fa-dollar-sign text-blue-600 mr-2"></i>
-                                        <span class="text-lg font-bold text-blue-800">Saldo: $${customer.saldo}</span>
-                                    </div>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-map-marker-alt text-red-500 mr-3 text-lg"></i>
+                                <div>
+                                    <p class="text-sm text-gray-500">Dirección</p>
+                                    <p class="font-semibold text-gray-800">${currentCustomer.direccion}</p>
                                 </div>
                             </div>
                         </div>
-                        <div class="flex justify-end">
-                            <a 
-                                href="${customer.whatsapp_link}" 
-                                target="_blank"
-                                class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors duration-200"
-                            >
-                                <i class="fab fa-whatsapp mr-2"></i>Enviar WhatsApp
-                            </a>
+                    </div>
+                    
+                    <!-- Saldo -->
+                    <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-6 border border-green-200">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h4 class="text-lg font-semibold text-gray-800 mb-1">Saldo Actual</h4>
+                                <p class="text-sm text-gray-600">Tu saldo disponible</p>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-3xl font-bold text-green-600">$${currentCustomer.saldo}</div>
+                                <p class="text-sm text-green-500">Pesos Argentinos</p>
+                            </div>
                         </div>
                     </div>
-                `;
-            });
-
-            resultsContainer.innerHTML = html;
-            resultsSection.classList.remove('hidden');
-        }
-
-        function showError() {
-            const noResults = document.getElementById('noResults');
-            noResults.innerHTML = `
-                <div class="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-                    <i class="fas fa-exclamation-circle text-red-600 text-3xl mb-4"></i>
-                    <h3 class="text-lg font-medium text-red-800 mb-2">Error en la búsqueda</h3>
-                    <p class="text-red-700">Ocurrió un error al buscar. Por favor, intenta nuevamente.</p>
+                    
+                    <!-- Acciones -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <a 
+                            href="${currentCustomer.whatsapp_link}" 
+                            target="_blank"
+                            class="flex items-center justify-center px-6 py-4 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors duration-200"
+                        >
+                            <i class="fab fa-whatsapp mr-3 text-xl"></i>
+                            Enviar WhatsApp
+                        </a>
+                        
+                        <button 
+                            onclick="refreshBalance()"
+                            class="flex items-center justify-center px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200"
+                        >
+                            <i class="fas fa-sync-alt mr-3"></i>
+                            Actualizar Saldo
+                        </button>
+                    </div>
+                    
+                    <!-- Información Adicional -->
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h4 class="font-semibold text-gray-800 mb-2">
+                            <i class="fas fa-info-circle mr-2 text-blue-500"></i>Información
+                        </h4>
+                        <ul class="text-sm text-gray-600 space-y-1">
+                            <li>• Tu saldo se actualiza automáticamente</li>
+                            <li>• Puedes contactarnos por WhatsApp para consultas</li>
+                            <li>• Los pagos se procesan en horario comercial</li>
+                        </ul>
+                    </div>
                 </div>
             `;
-            noResults.classList.remove('hidden');
+            
+            customerInfo.innerHTML = html;
+            hideAllSections();
+            document.getElementById('dashboardSection').classList.remove('hidden');
         }
+
+        // Función para cerrar sesión
+        function logout() {
+            currentCustomer = null;
+            hideAllSections();
+            showLogin();
+            
+            // Limpiar formulario
+            document.getElementById('loginForm').reset();
+        }
+
+        // Función para mostrar el formulario de login
+        function showLogin() {
+            hideAllSections();
+            document.getElementById('loginSection').classList.remove('hidden');
+        }
+
+        // Función para mostrar loading
+        function showLoading() {
+            hideAllSections();
+            document.getElementById('loadingSection').classList.remove('hidden');
+        }
+
+        // Función para ocultar loading
+        function hideLoading() {
+            document.getElementById('loadingSection').classList.add('hidden');
+        }
+
+        // Función para mostrar error
+        function showError() {
+            hideAllSections();
+            document.getElementById('errorMessage').classList.remove('hidden');
+        }
+
+        // Función para ocultar todas las secciones
+        function hideAllSections() {
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('dashboardSection').classList.add('hidden');
+            document.getElementById('errorMessage').classList.add('hidden');
+            document.getElementById('loadingSection').classList.add('hidden');
+        }
+
+        // Función para actualizar saldo
+        function refreshBalance() {
+            if (!currentCustomer) return;
+            
+            showLoading();
+            
+            fetch(`/refresh-balance?direccion=${encodeURIComponent(currentCustomer.direccion)}&telefono=${encodeURIComponent(currentCustomer.numero)}`)
+                .then(response => response.json())
+                .then(data => {
+                    hideLoading();
+                    if (data.success) {
+                        currentCustomer = data.customer;
+                        showDashboard();
+                    } else {
+                        alert('Error al actualizar el saldo. Por favor, intenta nuevamente.');
+                    }
+                })
+                .catch(error => {
+                    hideLoading();
+                    console.error('Error:', error);
+                    alert('Error al actualizar el saldo. Por favor, intenta nuevamente.');
+                });
+        }
+
+        // Inicializar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            showLogin();
+        });
     </script>
 </body>
 </html> 
